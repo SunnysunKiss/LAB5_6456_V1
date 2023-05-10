@@ -51,6 +51,7 @@ uint8_t text[400];
 
 int led_rate = 10; //led blinking speed
 uint8_t led_status = 0; //off led at first
+uint8_t blink = 0;//blink in hz
 
 uint8_t B1;
 uint8_t B1b; // edge check
@@ -126,7 +127,7 @@ int main(void)
 	  if(led_status == 1){
 	  static uint32_t timestamp=0;
 	  if(timestamp<HAL_GetTick()){
-		  timestamp = HAL_GetTick() + (led_rate);
+		  timestamp = HAL_GetTick() + (blink);
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 		  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, led_status);
 	  }}
@@ -291,21 +292,27 @@ void UI()
 				welcome = 0;
 				led = 1;
 				button = 0;
+				state=0;
 			}
 			else if(Rxbuffer[0]==97){//+ led speed
 				led_rate = led_rate+1;
-
+				blink = 1000/led_rate;
 				sprintf((char*)Txbuffer,"LED2's current Blinking speed : %d\r\n",led_rate);
 				HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
 				Rxbuffer[0]=0;
+
+				state=0;
 
 			}
 			else if(Rxbuffer[0]==115){//-led speed
 				led_rate = led_rate-1;
+				blink = 1000/led_rate;
 				if(led_rate<=0)led_rate=1;
 				sprintf((char*)Txbuffer,"LED2's current Blinking speed : %d\r\n",led_rate);
 				HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
+
 				Rxbuffer[0]=0;
+				state=0;
 			}
 			else if(Rxbuffer[0]==100){
 				if(led_status == 0){//off to on led
@@ -313,19 +320,24 @@ void UI()
 					HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, led_status); //fix
 					sprintf((char*)Txbuffer,"LED2's current Status : ON\r\n");
 					HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
+
 					Rxbuffer[0]=0;
+					state=0;
 				}
 				else if(led_status == 1){//on to off led
 					led_status = 0;
 					HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, led_status); //fix
 					sprintf((char*)Txbuffer,"LED2's current Status : OFF\r\n");
 					HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
+
 					Rxbuffer[0]=0;
+					state=0;
 				}
 
 			}
-			else if(Rxbuffer[0]!=120&&Rxbuffer[0]!=100&&Rxbuffer[0]!=115&&Rxbuffer[0]!=97&&Rxbuffer[0]!=0){
+			else if(Rxbuffer[0]!=120&&Rxbuffer[0]!=100&&Rxbuffer[0]!=115&&Rxbuffer[0]!=97&&Rxbuffer[0]!=0){//error press
 				state =3;
+
 				Rxbuffer[0]=0;
 			}
 			else if(Rxbuffer[0]==120){//back to home
@@ -335,6 +347,7 @@ void UI()
 				Rxbuffer[0]=0;
 				state = 2;
 			}
+			else{state=0;}
 			break; //break case 0
 		case 1://button status
 			if(button == 0){
@@ -364,13 +377,15 @@ void UI()
 				sprintf((char*)Txbuffer,"Un-press\r\n");
 				HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
 				Rxbuffer[0]=0;
+				state=1;
 			}
 			else if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0 && B1b == 1){//press
 				sprintf((char*)Txbuffer,"Press\r\n");
 				HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
 				Rxbuffer[0]=0;
+				state=1;
 			}
-			else if(Rxbuffer[0]!=120&&Rxbuffer[0]!=0){
+			else if(Rxbuffer[0]!=120&&Rxbuffer[0]!=0){//error press
 				state =3;
 				Rxbuffer[0]=0;
 			}
@@ -380,6 +395,7 @@ void UI()
 				Rxbuffer[0]=0;
 				state = 2;
 			}
+			else{state=1;}
 			B1b = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 			break;
 		case 2://home
@@ -418,6 +434,7 @@ void UI()
 				state =3;
 				Rxbuffer[0]=0;
 			}
+			else{state=2;}
 
 
 			break;
