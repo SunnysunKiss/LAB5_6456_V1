@@ -296,7 +296,7 @@ void UI()
 			}
 			else if(Rxbuffer[0]==97){//+ led speed
 				led_rate = led_rate+1;
-				blink = 1000/led_rate;
+				blink = 500/led_rate;
 				sprintf((char*)Txbuffer,"LED2's current Blinking speed : %d\r\n",led_rate);
 				HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
 				Rxbuffer[0]=0;
@@ -306,7 +306,7 @@ void UI()
 			}
 			else if(Rxbuffer[0]==115){//-led speed
 				led_rate = led_rate-1;
-				blink = 1000/led_rate;
+				blink = 500/led_rate;
 				if(led_rate<=0)led_rate=1;
 				sprintf((char*)Txbuffer,"LED2's current Blinking speed : %d\r\n",led_rate);
 				HAL_UART_Transmit(&huart2, Txbuffer, strlen((char*)Txbuffer), tm);
